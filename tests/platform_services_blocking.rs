@@ -6,37 +6,41 @@ use std::time::Duration;
 
 use http::StatusCode;
 use redfish::{BlockingClient, ResetType};
+use tokio::runtime::Runtime;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate};
 
-#[tokio::test]
-async fn blocking_account_service_crud_works() {
-    let server = MockServer::start().await;
+#[test]
+fn blocking_account_service_crud_works() {
+    let rt = Runtime::new().unwrap();
+    let server = rt.block_on(MockServer::start());
 
-    Mock::given(method("POST"))
-        .and(path("/redfish/v1/AccountService/Accounts"))
-        .respond_with(
-            ResponseTemplate::new(StatusCode::CREATED.as_u16())
-                .insert_header("Location", "/redfish/v1/AccountService/Accounts/3")
-                .set_body_raw(r#"{"Id":"3","UserName":"u3"}"#, "application/json"),
-        )
-        .mount(&server)
-        .await;
+    rt.block_on(async {
+        Mock::given(method("POST"))
+            .and(path("/redfish/v1/AccountService/Accounts"))
+            .respond_with(
+                ResponseTemplate::new(StatusCode::CREATED.as_u16())
+                    .insert_header("Location", "/redfish/v1/AccountService/Accounts/3")
+                    .set_body_raw(r#"{"Id":"3","UserName":"u3"}"#, "application/json"),
+            )
+            .mount(&server)
+            .await;
 
-    Mock::given(method("PATCH"))
-        .and(path("/redfish/v1/AccountService/Accounts/3"))
-        .respond_with(
-            ResponseTemplate::new(StatusCode::OK.as_u16())
-                .set_body_raw(r#"{"Id":"3","Enabled":false}"#, "application/json"),
-        )
-        .mount(&server)
-        .await;
+        Mock::given(method("PATCH"))
+            .and(path("/redfish/v1/AccountService/Accounts/3"))
+            .respond_with(
+                ResponseTemplate::new(StatusCode::OK.as_u16())
+                    .set_body_raw(r#"{"Id":"3","Enabled":false}"#, "application/json"),
+            )
+            .mount(&server)
+            .await;
 
-    Mock::given(method("DELETE"))
-        .and(path("/redfish/v1/AccountService/Accounts/3"))
-        .respond_with(ResponseTemplate::new(StatusCode::NO_CONTENT.as_u16()))
-        .mount(&server)
-        .await;
+        Mock::given(method("DELETE"))
+            .and(path("/redfish/v1/AccountService/Accounts/3"))
+            .respond_with(ResponseTemplate::new(StatusCode::NO_CONTENT.as_u16()))
+            .mount(&server)
+            .await;
+    });
 
     let client = BlockingClient::builder(&server.uri())
         .unwrap()
@@ -81,19 +85,22 @@ impl Respond for TaskSeqResponder {
     }
 }
 
-#[tokio::test]
-async fn blocking_task_wait_for_task_polls_until_done() {
-    let server = MockServer::start().await;
+#[test]
+fn blocking_task_wait_for_task_polls_until_done() {
+    let rt = Runtime::new().unwrap();
+    let server = rt.block_on(MockServer::start());
 
     let responder = TaskSeqResponder {
         calls: Arc::new(AtomicUsize::new(0)),
     };
 
-    Mock::given(method("GET"))
-        .and(path("/redfish/v1/TaskService/Tasks/99"))
-        .respond_with(responder)
-        .mount(&server)
-        .await;
+    rt.block_on(async {
+        Mock::given(method("GET"))
+            .and(path("/redfish/v1/TaskService/Tasks/99"))
+            .respond_with(responder)
+            .mount(&server)
+            .await;
+    });
 
     let client = BlockingClient::builder(&server.uri())
         .unwrap()
@@ -113,15 +120,18 @@ async fn blocking_task_wait_for_task_polls_until_done() {
     assert!(task.is_done());
 }
 
-#[tokio::test]
-async fn blocking_system_reset_action_works() {
-    let server = MockServer::start().await;
+#[test]
+fn blocking_system_reset_action_works() {
+    let rt = Runtime::new().unwrap();
+    let server = rt.block_on(MockServer::start());
 
-    Mock::given(method("POST"))
-        .and(path("/redfish/v1/Systems/1/Actions/ComputerSystem.Reset"))
-        .respond_with(ResponseTemplate::new(StatusCode::NO_CONTENT.as_u16()))
-        .mount(&server)
-        .await;
+    rt.block_on(async {
+        Mock::given(method("POST"))
+            .and(path("/redfish/v1/Systems/1/Actions/ComputerSystem.Reset"))
+            .respond_with(ResponseTemplate::new(StatusCode::NO_CONTENT.as_u16()))
+            .mount(&server)
+            .await;
+    });
 
     let client = BlockingClient::builder(&server.uri())
         .unwrap()
