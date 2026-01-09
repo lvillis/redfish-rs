@@ -16,15 +16,18 @@ fn odata_query_appends_expected_pairs() {
         .expect("valid base url");
 
     let url = q.apply_to_url(url);
-    let qs = url.query().unwrap_or_default();
+    let pairs: Vec<(String, String)> = url
+        .query_pairs()
+        .map(|(k, v)| (k.into_owned(), v.into_owned()))
+        .collect();
 
-    // We don't assert on exact ordering beyond presence; URL encoding may vary.
-    assert!(qs.contains("$select=Id%2CName"));
-    assert!(qs.contains("$expand=Members"));
-    assert!(qs.contains("$top=10"));
-    assert!(qs.contains("$skip=5"));
-    assert!(qs.contains("$orderby=Created+desc"));
-    assert!(qs.contains("oem=x"));
+    // Compare decoded pairs to avoid URL-encoding differences between url versions.
+    assert!(pairs.iter().any(|(k, v)| k == "$select" && v == "Id,Name"));
+    assert!(pairs.iter().any(|(k, v)| k == "$expand" && v == "Members"));
+    assert!(pairs.iter().any(|(k, v)| k == "$top" && v == "10"));
+    assert!(pairs.iter().any(|(k, v)| k == "$skip" && v == "5"));
+    assert!(pairs.iter().any(|(k, v)| k == "$orderby" && v == "Created desc"));
+    assert!(pairs.iter().any(|(k, v)| k == "oem" && v == "x"));
 }
 
 #[test]
@@ -33,8 +36,11 @@ fn odata_query_preserves_existing_query() {
 
     let url = Url::parse("https://example.com/redfish/v1/Systems?foo=bar").expect("valid url");
     let url = q.apply_to_url(url);
-    let qs = url.query().unwrap_or_default();
+    let pairs: Vec<(String, String)> = url
+        .query_pairs()
+        .map(|(k, v)| (k.into_owned(), v.into_owned()))
+        .collect();
 
-    assert!(qs.contains("foo=bar"));
-    assert!(qs.contains("$top=1"));
+    assert!(pairs.iter().any(|(k, v)| k == "foo" && v == "bar"));
+    assert!(pairs.iter().any(|(k, v)| k == "$top" && v == "1"));
 }
