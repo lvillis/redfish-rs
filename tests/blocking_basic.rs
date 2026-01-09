@@ -43,6 +43,7 @@ fn blocking_retries_on_503_for_idempotent_methods() {
         Mock::given(method("GET"))
             .and(path("/redfish/v1/Systems"))
             .respond_with(ResponseTemplate::new(503))
+            .up_to_n_times(1)
             .expect(1)
             .mount(&server)
             .await;

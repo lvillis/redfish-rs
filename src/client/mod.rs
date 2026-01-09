@@ -19,6 +19,14 @@ use crate::{Auth, Error, RequestContext, Result};
 
 const DEFAULT_BODY_SNIPPET_LIMIT: usize = 8 * 1024;
 
+#[cfg(feature = "rustls")]
+fn ensure_rustls_provider() {
+    let _ = rustls::crypto::ring::default_provider().install_default();
+}
+
+#[cfg(not(feature = "rustls"))]
+fn ensure_rustls_provider() {}
+
 /// Shared, runtime-agnostic client configuration.
 #[derive(Clone)]
 struct ClientBase {
@@ -551,6 +559,7 @@ pub struct ClientBuilder {
 #[cfg(feature = "async")]
 impl ClientBuilder {
     fn new(base_url: &str) -> Result<Self> {
+        ensure_rustls_provider();
         let base_url = normalize_base_url(base_url)?;
         Ok(Self {
             base_url,
@@ -717,6 +726,7 @@ pub struct BlockingClientBuilder {
 #[cfg(feature = "blocking")]
 impl BlockingClientBuilder {
     fn new(base_url: &str) -> Result<Self> {
+        ensure_rustls_provider();
         let base_url = normalize_base_url(base_url)?;
         Ok(Self {
             base_url,
