@@ -26,7 +26,11 @@ fn odata_query_appends_expected_pairs() {
     assert!(pairs.iter().any(|(k, v)| k == "$expand" && v == "Members"));
     assert!(pairs.iter().any(|(k, v)| k == "$top" && v == "10"));
     assert!(pairs.iter().any(|(k, v)| k == "$skip" && v == "5"));
-    assert!(pairs.iter().any(|(k, v)| k == "$orderby" && v == "Created desc"));
+    assert!(
+        pairs
+            .iter()
+            .any(|(k, v)| k == "$orderby" && v == "Created desc")
+    );
     assert!(pairs.iter().any(|(k, v)| k == "oem" && v == "x"));
 }
 
