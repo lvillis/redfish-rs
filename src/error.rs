@@ -267,15 +267,13 @@ impl fmt::Display for Error {
                 ctx.method.as_str(),
                 ctx.url
             )?,
-            (Some(ctx), None) => {
-                write!(
-                    f,
-                    "{} ({} {})",
-                    self.inner.message,
-                    ctx.method.as_str(),
-                    ctx.url
-                )?
-            }
+            (Some(ctx), None) => write!(
+                f,
+                "{} ({} {})",
+                self.inner.message,
+                ctx.method.as_str(),
+                ctx.url
+            )?,
             (None, Some(status)) => {
                 write!(f, "{} (status {})", self.inner.message, status.as_u16())?
             }
