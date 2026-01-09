@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default
+            cargo_flags: ""
+          - name: async-native-tls
+            cargo_flags: "--no-default-features --features async,native-tls"
+          - name: blocking-rustls
+            cargo_flags: "--no-default-features --features blocking,rustls"
+          - name: blocking-native-tls
+            cargo_flags: "--no-default-features --features blocking,native-tls"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.92.0
+          components: rustfmt, clippy
+
+      - name: Cargo fmt
+        run: cargo fmt --all --check
+
+      - name: Cargo clippy
+        run: cargo clippy --all-targets ${{ matrix.cargo_flags }} -- -D warnings
+
+      - name: Cargo test
+        run: cargo test ${{ matrix.cargo_flags }}
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MSRV toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.92.0
+
+      - name: Cargo check (MSRV)
+        run: cargo check
