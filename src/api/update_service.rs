@@ -4,9 +4,9 @@ use crate::Result;
 use crate::api::ActionResponse;
 use crate::types::{Collection, OdataId, SimpleUpdateRequest, SoftwareInventory, UpdateService};
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access `UpdateService`.
@@ -21,7 +21,7 @@ impl<'a, C> UpdateServiceService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> UpdateServiceService<'a, Client> {
     /// `GET /redfish/v1/UpdateService`
     pub async fn get(&self) -> Result<UpdateService> {
@@ -82,7 +82,7 @@ impl<'a> UpdateServiceService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> UpdateServiceService<'a, BlockingClient> {
     /// `GET /redfish/v1/UpdateService`
     pub fn get(&self) -> Result<UpdateService> {

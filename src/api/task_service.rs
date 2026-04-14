@@ -5,9 +5,9 @@ use http::Method;
 use crate::types::{Collection, OdataId, Task, TaskService};
 use crate::{Error, RequestContext, Result};
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access `TaskService`.
@@ -22,7 +22,7 @@ impl<'a, C> TaskServiceService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> TaskServiceService<'a, Client> {
     /// `GET /redfish/v1/TaskService`
     pub async fn get(&self) -> Result<TaskService> {
@@ -97,7 +97,7 @@ impl<'a> TaskServiceService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> TaskServiceService<'a, BlockingClient> {
     /// `GET /redfish/v1/TaskService`
     pub fn get(&self) -> Result<TaskService> {

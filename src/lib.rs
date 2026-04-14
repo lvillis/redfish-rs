@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![cfg_attr(
     not(test),
@@ -15,8 +16,8 @@
 //!
 //! This crate provides:
 //!
-//! - An async-first [`Client`] (Tokio-based)
-//! - An optional [`BlockingClient`] behind the `blocking` feature
+//! - An async-first [`Client`] when an `async-tls-*` feature is enabled
+//! - An optional [`BlockingClient`] when a `blocking-tls-*` feature is enabled
 //! - Common Redfish services (service root, systems, chassis, managers, sessions)
 //! - Platform services (accounts, events, tasks, updates)
 //! - Registries/JsonSchemas discovery endpoints
@@ -24,11 +25,63 @@
 //!
 //! Most users will start with [`Client::builder`] or [`BlockingClient::builder`].
 
-#[cfg(all(feature = "rustls", feature = "native-tls"))]
-compile_error!("Features `rustls` and `native-tls` are mutually exclusive. Enable at most one.");
+#[cfg(not(any(feature = "_async", feature = "_blocking")))]
+compile_error!(
+    "redfish requires at least one transport feature: enable an `async-tls-*` or `blocking-tls-*` feature"
+);
 
-#[cfg(all(not(feature = "async"), not(feature = "blocking")))]
-compile_error!("Enable at least one runtime mode: feature `async` (default) and/or `blocking`.");
+#[cfg(all(
+    feature = "_async",
+    not(feature = "async-tls-rustls-ring"),
+    not(feature = "async-tls-rustls-aws-lc-rs"),
+    not(feature = "async-tls-native")
+))]
+compile_error!(
+    "async transport requires one async TLS backend: enable `async-tls-rustls-ring`, `async-tls-rustls-aws-lc-rs`, or `async-tls-native`"
+);
+
+#[cfg(all(
+    feature = "_async",
+    any(
+        all(
+            feature = "async-tls-rustls-ring",
+            feature = "async-tls-rustls-aws-lc-rs"
+        ),
+        all(feature = "async-tls-rustls-ring", feature = "async-tls-native"),
+        all(feature = "async-tls-rustls-aws-lc-rs", feature = "async-tls-native")
+    )
+))]
+compile_error!(
+    "async transport requires exactly one TLS backend: choose only one of `async-tls-rustls-ring`, `async-tls-rustls-aws-lc-rs`, or `async-tls-native`"
+);
+
+#[cfg(all(
+    feature = "_blocking",
+    not(feature = "blocking-tls-rustls-ring"),
+    not(feature = "blocking-tls-rustls-aws-lc-rs"),
+    not(feature = "blocking-tls-native")
+))]
+compile_error!(
+    "blocking transport requires one blocking TLS backend: enable `blocking-tls-rustls-ring`, `blocking-tls-rustls-aws-lc-rs`, or `blocking-tls-native`"
+);
+
+#[cfg(all(
+    feature = "_blocking",
+    any(
+        all(
+            feature = "blocking-tls-rustls-ring",
+            feature = "blocking-tls-rustls-aws-lc-rs"
+        ),
+        all(feature = "blocking-tls-rustls-ring", feature = "blocking-tls-native"),
+        all(
+            feature = "blocking-tls-rustls-aws-lc-rs",
+            feature = "blocking-tls-native"
+        )
+    )
+))]
+compile_error!(
+    "blocking transport requires exactly one TLS backend: choose only one of `blocking-tls-rustls-ring`, `blocking-tls-rustls-aws-lc-rs`, or `blocking-tls-native`"
+);
 
 pub mod api;
 mod auth;
@@ -40,13 +93,13 @@ mod util;
 
 pub use api::ActionResponse;
 pub use auth::{Auth, Credentials, SessionToken};
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 pub use client::BlockingClient;
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 pub use client::BlockingClientBuilder;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 pub use client::Client;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 pub use client::ClientBuilder;
 pub use error::{Error, ErrorKind, RequestContext};
 

@@ -2,7 +2,7 @@
 name = "redfish"
 version = "0.3.1"
 edition = "2024"
-rust-version = "1.92.0"
+rust-version = "1.94"
 license = "MIT"
 description = "Production-grade Rust SDK for DMTF Redfish (async-first, optional blocking)."
 readme = "README.md"
@@ -21,100 +21,85 @@ include = [
   "tests/**",
 ]
 
-[workspace]
-resolver = "3"
-
-[workspace.package]
-edition = "2024"
-rust-version = "1.92.0"
-license = "MIT"
-
-[workspace.dependencies]
-base64 = { version = "0.22.1", default-features = false, features = ["std"] }
-fastrand = { version = "2.3.0", default-features = false, features = ["std"] }
-http = { version = "1.4.0", default-features = false, features = ["std"] }
-httpdate = { version = "1.0.3", default-features = false }
-reqwest = { version = "0.13.1", default-features = false, features = ["json"] }
-rustls = { version = "0.23.36", default-features = false, features = ["ring", "std", "tls12"] }
-secrecy = { version = "0.10.3", default-features = false }
-serde = { version = "1.0.228", default-features = false, features = ["derive"] }
-serde_json = { version = "1.0.149", default-features = false, features = ["std"] }
-serde_path_to_error = { version = "0.1.20", default-features = false }
-tokio = { version = "1.49.0", default-features = false, features = ["rt", "time"] }
-tracing = { version = "0.1.44", default-features = false }
-url = { version = "2.5.8", default-features = false, features = ["std"] }
-
-# Dev / test
-wiremock = { version = "0.6.5", default-features = false }
+[package.metadata.docs.rs]
+no-default-features = true
+features = ["async-tls-rustls-ring", "blocking-tls-rustls-ring"]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["async", "rustls"]
+default = ["async-tls-rustls-ring"]
+_async = []
+_blocking = []
 
-# Runtime modes
-async = ["dep:tokio"]
-blocking = ["reqwest/blocking"]
-
-# TLS backends (choose at most one)
-rustls = ["reqwest/rustls-no-provider", "dep:rustls"]
-native-tls = ["reqwest/native-tls"]
+# reqx transport + TLS features
+async-tls-rustls-ring = ["_async", "dep:reqx", "dep:tokio", "reqx?/async-tls-rustls-ring"]
+async-tls-rustls-aws-lc-rs = [
+  "_async",
+  "dep:reqx",
+  "dep:tokio",
+  "reqx?/async-tls-rustls-aws-lc-rs",
+]
+async-tls-native = ["_async", "dep:reqx", "dep:tokio", "reqx?/async-tls-native"]
+blocking-tls-rustls-ring = ["_blocking", "dep:reqx", "reqx?/blocking-tls-rustls-ring"]
+blocking-tls-rustls-aws-lc-rs = [
+  "_blocking",
+  "dep:reqx",
+  "reqx?/blocking-tls-rustls-aws-lc-rs",
+]
+blocking-tls-native = ["_blocking", "dep:reqx", "reqx?/blocking-tls-native"]
 
 # Observability
 tracing = ["dep:tracing"]
 
-# Danger zone: allow invalid TLS certs / hostnames.
-# This is useful for some BMCs with self-signed certs.
-dangerous = []
-
 [dependencies]
-base64 = { workspace = true }
-fastrand = { workspace = true }
-http = { workspace = true }
-httpdate = { workspace = true }
-reqwest = { workspace = true }
-rustls = { workspace = true, optional = true }
-secrecy = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-serde_path_to_error = { workspace = true }
-tokio = { workspace = true, optional = true }
-tracing = { workspace = true, optional = true }
-url = { workspace = true }
+base64 = { version = "0.22.1", default-features = false, features = ["std"] }
+fastrand = { version = "2.4.1", default-features = false, features = ["std"] }
+http = { version = "1.4.0", default-features = false, features = ["std"] }
+httpdate = { version = "1.0.3", default-features = false }
+reqx = { version = "0.1.34", default-features = false, optional = true }
+secrecy = { version = "0.10.3", default-features = false }
+serde = { version = "1.0.228", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0.149", default-features = false, features = ["std"] }
+serde_path_to_error = { version = "0.1.20", default-features = false }
+tokio = { version = "1.51.1", default-features = false, features = ["rt", "time"], optional = true }
+tracing = { version = "0.1.44", default-features = false, optional = true }
+url = { version = "2.5.8", default-features = false, features = ["std"] }
 
 [dev-dependencies]
-tokio = { workspace = true, default-features = false, features = ["rt-multi-thread", "macros", "time"] }
-wiremock = { workspace = true }
-serde_json = { workspace = true }
+tokio = { version = "1.51.1", default-features = false, features = ["rt-multi-thread", "macros", "time"] }
+wiremock = { version = "0.6.5", default-features = false }
+serde_json = { version = "1.0.149", default-features = false, features = ["std"] }
 
 
 [[example]]
 name = "async_service_root"
 path = "examples/async_service_root.rs"
-required-features = ["async"]
+required-features = ["_async"]
 
 [[example]]
 name = "async_account_list"
 path = "examples/async_account_list.rs"
-required-features = ["async"]
+required-features = ["_async"]
 
 [[example]]
 name = "async_simple_update"
 path = "examples/async_simple_update.rs"
-required-features = ["async"]
+required-features = ["_async"]
 
 [[example]]
 name = "blocking_service_root"
 path = "examples/blocking_service_root.rs"
-required-features = ["blocking"]
+required-features = ["_blocking"]
 
 [[example]]
 name = "blocking_account_list"
 path = "examples/blocking_account_list.rs"
-required-features = ["blocking"]
+required-features = ["_blocking"]
 
 [[example]]
 name = "blocking_simple_update"
 path = "examples/blocking_simple_update.rs"
-required-features = ["blocking"]
+required-features = ["_blocking"]
 
 [package.metadata.release]
 tag-prefix = ""

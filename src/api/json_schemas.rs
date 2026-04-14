@@ -1,9 +1,9 @@
 use crate::Result;
 use crate::types::{Collection, JsonSchemaFile, OdataId};
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access `JsonSchemas`.
@@ -18,7 +18,7 @@ impl<'a, C> JsonSchemasService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> JsonSchemasService<'a, Client> {
     /// `GET /redfish/v1/JsonSchemas`
     pub async fn list(&self) -> Result<Collection<OdataId>> {
@@ -33,7 +33,7 @@ impl<'a> JsonSchemasService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> JsonSchemasService<'a, BlockingClient> {
     /// `GET /redfish/v1/JsonSchemas`
     pub fn list(&self) -> Result<Collection<OdataId>> {

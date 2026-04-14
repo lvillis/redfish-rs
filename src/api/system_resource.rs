@@ -8,9 +8,9 @@ use crate::types::{
     LogEntry, LogService, ODataQuery, OdataId, Storage,
 };
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access a specific `ComputerSystem` and its common sub-resources.
@@ -35,7 +35,7 @@ impl<'a, C> SystemResourceService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> SystemResourceService<'a, Client> {
     /// `GET /redfish/v1/Systems/{id}`
     pub async fn get(&self) -> Result<ComputerSystem> {
@@ -231,7 +231,7 @@ impl<'a> SystemResourceService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> SystemResourceService<'a, BlockingClient> {
     pub fn get(&self) -> Result<ComputerSystem> {
         let url = self.client.redfish_url(&["Systems", self.id()])?;

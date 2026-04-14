@@ -6,9 +6,9 @@ use crate::types::{
 };
 use crate::{Error, Result};
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access `AccountService`.
@@ -23,7 +23,7 @@ impl<'a, C> AccountServiceService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> AccountServiceService<'a, Client> {
     /// `GET /redfish/v1/AccountService`
     pub async fn get(&self) -> Result<AccountService> {
@@ -115,7 +115,7 @@ impl<'a> AccountServiceService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> AccountServiceService<'a, BlockingClient> {
     /// `GET /redfish/v1/AccountService`
     pub fn get(&self) -> Result<AccountService> {

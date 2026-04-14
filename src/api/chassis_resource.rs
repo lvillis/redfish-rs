@@ -7,9 +7,9 @@ use crate::types::{
     Sensor, Thermal, actions::ResetRequest,
 };
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access a specific `Chassis` and its common sub-resources.
@@ -32,7 +32,7 @@ impl<'a, C> ChassisResourceService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> ChassisResourceService<'a, Client> {
     /// `GET /redfish/v1/Chassis/{id}`
     pub async fn get(&self) -> Result<Chassis> {
@@ -176,7 +176,7 @@ impl<'a> ChassisResourceService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> ChassisResourceService<'a, BlockingClient> {
     pub fn get(&self) -> Result<Chassis> {
         let url = self.client.redfish_url(&["Chassis", self.id()])?;

@@ -8,7 +8,7 @@ Production-grade Rust SDK for **DMTF Redfish** (async-first, optional blocking).
 
 Goals:
 
-- Clean public API (no `reqwest` types in public signatures)
+- Clean public API (no backend-specific HTTP client types in public signatures)
 - Strong diagnostics (HTTP status, request-id, safe body snippet)
 - Security-by-default (auth redaction, no accidental token logging)
 - Conservative retries (respects `Retry-After`)
@@ -18,21 +18,20 @@ Goals:
 
 ```toml
 [dependencies]
-redfish = "0.3.0"
+redfish = "0.3.1"
 ```
 
-By default, the crate is **async** and uses **rustls**.
+By default, the crate enables `async-tls-rustls-ring`.
 
 ### Cargo features
 
-- `async` (default): async client (Tokio-based)
-- `blocking`: enable `BlockingClient` (synchronous API)
-- `rustls` (default): TLS via rustls
-- `native-tls`: TLS via system-native TLS
+- `async-tls-rustls-ring` (default): async client (Tokio-based) over rustls + ring
+- `async-tls-rustls-aws-lc-rs`: async client (Tokio-based) over rustls + aws-lc-rs
+- `async-tls-native`: async client (Tokio-based) over system-native TLS
+- `blocking-tls-rustls-ring`: enable `BlockingClient` over rustls + ring
+- `blocking-tls-rustls-aws-lc-rs`: enable `BlockingClient` over rustls + aws-lc-rs
+- `blocking-tls-native`: enable `BlockingClient` over system-native TLS
 - `tracing`: emit `tracing` spans for requests
-- `dangerous`: allow opting into invalid-certs/hostnames (see docs; not recommended)
-
-> Enable at most one of `rustls` or `native-tls`.
 
 ## Quick start (async)
 
@@ -57,10 +56,10 @@ async fn main() -> Result<(), redfish::Error> {
 
 ## Quick start (blocking)
 
-Enable the `blocking` feature:
+Enable a blocking transport feature:
 
 ```toml
-redfish = { version = "0.3.0", default-features = false, features = ["blocking", "rustls"] }
+redfish = { version = "0.3.1", default-features = false, features = ["blocking-tls-rustls-ring"] }
 ```
 
 ```rust,no_run
@@ -119,7 +118,7 @@ vendor/OEM fields via `extra` maps.
 
 ## MSRV / toolchain
 
-- Rust 1.92.0 (see `rust-toolchain.toml`)
+- Rust 1.94.1 (see `rust-toolchain.toml`)
 - Edition 2024
 
 ## License

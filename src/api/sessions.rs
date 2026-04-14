@@ -5,9 +5,9 @@ use crate::auth::X_AUTH_TOKEN;
 use crate::types::{Collection, OdataId, Session};
 use crate::{Error, Result, SessionToken};
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Result of a successful session login.
@@ -41,7 +41,7 @@ struct SessionCreateRequest<'a> {
     password: &'a str,
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> SessionsService<'a, Client> {
     /// List sessions.
     ///
@@ -111,7 +111,7 @@ impl<'a> SessionsService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> SessionsService<'a, BlockingClient> {
     /// List sessions.
     ///

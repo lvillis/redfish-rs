@@ -1,7 +1,7 @@
 use std::time::{Duration, SystemTime};
 
+use http::HeaderMap;
 use http::header::RETRY_AFTER;
-use http::{HeaderMap, Method, StatusCode};
 
 /// Retry policy for transient failures.
 ///
@@ -66,23 +66,6 @@ impl RetryPolicy {
         self.jitter = jitter;
         self
     }
-}
-
-pub(crate) fn is_idempotent(method: &Method) -> bool {
-    matches!(
-        *method,
-        Method::GET | Method::HEAD | Method::PUT | Method::DELETE | Method::OPTIONS
-    )
-}
-
-pub(crate) fn should_retry_status(status: StatusCode) -> bool {
-    matches!(
-        status,
-        StatusCode::TOO_MANY_REQUESTS
-            | StatusCode::BAD_GATEWAY
-            | StatusCode::SERVICE_UNAVAILABLE
-            | StatusCode::GATEWAY_TIMEOUT
-    )
 }
 
 pub(crate) fn parse_retry_after(headers: &HeaderMap) -> Option<Duration> {

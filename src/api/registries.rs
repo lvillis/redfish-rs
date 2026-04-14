@@ -1,9 +1,9 @@
 use crate::Result;
 use crate::types::{Collection, MessageRegistryFile, OdataId};
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access `Registries`.
@@ -18,7 +18,7 @@ impl<'a, C> RegistriesService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> RegistriesService<'a, Client> {
     /// `GET /redfish/v1/Registries`
     pub async fn list(&self) -> Result<Collection<OdataId>> {
@@ -33,7 +33,7 @@ impl<'a> RegistriesService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> RegistriesService<'a, BlockingClient> {
     /// `GET /redfish/v1/Registries`
     pub fn list(&self) -> Result<Collection<OdataId>> {

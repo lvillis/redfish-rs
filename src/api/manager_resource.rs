@@ -8,9 +8,9 @@ use crate::types::{
     actions::ResetRequest,
 };
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access a specific `Manager` and its common sub-resources.
@@ -33,7 +33,7 @@ impl<'a, C> ManagerResourceService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> ManagerResourceService<'a, Client> {
     /// `GET /redfish/v1/Managers/{id}`
     pub async fn get(&self) -> Result<Manager> {
@@ -192,7 +192,7 @@ impl<'a> ManagerResourceService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> ManagerResourceService<'a, BlockingClient> {
     pub fn get(&self) -> Result<Manager> {
         let url = self.client.redfish_url(&["Managers", self.id()])?;

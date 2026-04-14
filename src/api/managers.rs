@@ -4,9 +4,9 @@ use crate::Result;
 use crate::api::ActionResponse;
 use crate::types::{Collection, Manager, OdataId, ResetType, actions::ResetRequest};
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access `Managers` collection and member resources.
@@ -21,7 +21,7 @@ impl<'a, C> ManagersService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> ManagersService<'a, Client> {
     /// `GET /redfish/v1/Managers`
     pub async fn list(&self) -> Result<Collection<OdataId>> {
@@ -58,7 +58,7 @@ impl<'a> ManagersService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> ManagersService<'a, BlockingClient> {
     /// `GET /redfish/v1/Managers`
     pub fn list(&self) -> Result<Collection<OdataId>> {

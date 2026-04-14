@@ -19,14 +19,6 @@ use crate::{Auth, Error, RequestContext, Result};
 
 const DEFAULT_BODY_SNIPPET_LIMIT: usize = 8 * 1024;
 
-#[cfg(feature = "rustls")]
-fn ensure_rustls_provider() {
-    let _ = rustls::crypto::ring::default_provider().install_default();
-}
-
-#[cfg(not(feature = "rustls"))]
-fn ensure_rustls_provider() {}
-
 /// Shared, runtime-agnostic client configuration.
 #[derive(Clone)]
 struct ClientBase {
@@ -70,14 +62,14 @@ impl ClientBase {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 #[derive(Clone)]
 pub struct Client {
     base: ClientBase,
     transport: crate::transport::AsyncTransport,
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl Client {
     /// Start building a new async client.
     pub fn builder(base_url: &str) -> Result<ClientBuilder> {
@@ -308,14 +300,14 @@ impl Client {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 #[derive(Clone)]
 pub struct BlockingClient {
     base: ClientBase,
     transport: crate::transport::BlockingTransport,
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl BlockingClient {
     /// Start building a new blocking client.
     pub fn builder(base_url: &str) -> Result<BlockingClientBuilder> {
@@ -536,7 +528,7 @@ impl BlockingClient {
 }
 
 /// Builder for the async [`Client`].
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 #[derive(Debug, Clone)]
 pub struct ClientBuilder {
     base_url: Url,
@@ -547,19 +539,12 @@ pub struct ClientBuilder {
     connect_timeout: Duration,
     retry: RetryPolicy,
     body_snippet_limit: usize,
-
-    #[cfg(feature = "dangerous")]
-    danger_accept_invalid_certs: bool,
-    #[cfg(feature = "dangerous")]
-    danger_accept_invalid_hostnames: bool,
-
     user_agent: Option<String>,
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl ClientBuilder {
     fn new(base_url: &str) -> Result<Self> {
-        ensure_rustls_provider();
         let base_url = normalize_base_url(base_url)?;
         Ok(Self {
             base_url,
@@ -571,11 +556,6 @@ impl ClientBuilder {
             retry: RetryPolicy::default(),
             body_snippet_limit: DEFAULT_BODY_SNIPPET_LIMIT,
             user_agent: None,
-
-            #[cfg(feature = "dangerous")]
-            danger_accept_invalid_certs: false,
-            #[cfg(feature = "dangerous")]
-            danger_accept_invalid_hostnames: false,
         })
     }
 
@@ -641,47 +621,25 @@ impl ClientBuilder {
         self
     }
 
-    /// Allow invalid TLS certificates (NOT RECOMMENDED).
-    #[cfg(feature = "dangerous")]
-    pub fn danger_accept_invalid_certs(mut self, yes: bool) -> Self {
-        self.danger_accept_invalid_certs = yes;
-        self
-    }
-
-    /// Allow invalid TLS hostnames (NOT RECOMMENDED).
-    #[cfg(feature = "dangerous")]
-    pub fn danger_accept_invalid_hostnames(mut self, yes: bool) -> Self {
-        self.danger_accept_invalid_hostnames = yes;
-        self
-    }
-
     /// Build the client.
     pub fn build(self) -> Result<Client> {
-        let mut default_headers = self.default_headers.clone();
-        default_headers
-            .entry(ACCEPT)
-            .or_insert(HeaderValue::from_static("application/json"));
+        let user_agent = self
+            .user_agent
+            .unwrap_or_else(|| format!("redfish/{}", env!("CARGO_PKG_VERSION")));
 
-        let mut builder = reqwest::Client::builder()
-            .timeout(self.timeout)
+        let builder = reqx::Client::builder(self.base_url.as_str())
+            .tls_backend(crate::transport::default_async_tls_backend())
+            .request_timeout(self.timeout)
             .connect_timeout(self.connect_timeout)
-            .default_headers(default_headers);
+            .max_response_body_bytes(usize::MAX)
+            .retry_policy(crate::transport::reqx_retry_policy(&self.retry))
+            .backoff_source(crate::transport::reqx_backoff_source(self.retry.clone()))
+            .redirect_policy(reqx::prelude::RedirectPolicy::follow())
+            .default_status_policy(reqx::prelude::StatusPolicy::Response)
+            .client_name(user_agent);
 
-        if let Some(ua) = self.user_agent {
-            builder = builder.user_agent(ua);
-        } else {
-            builder = builder.user_agent(concat!("redfish/", env!("CARGO_PKG_VERSION")));
-        }
-
-        #[cfg(feature = "dangerous")]
-        {
-            if self.danger_accept_invalid_certs {
-                builder = builder.danger_accept_invalid_certs(true);
-            }
-            if self.danger_accept_invalid_hostnames {
-                builder = builder.danger_accept_invalid_hostnames(true);
-            }
-        }
+        #[cfg(feature = "tracing")]
+        let builder = builder.observer(crate::transport::ReqxTracingObserver);
 
         let client = builder
             .build()
@@ -695,15 +653,14 @@ impl ClientBuilder {
             body_snippet_limit: self.body_snippet_limit,
         };
 
-        let transport =
-            crate::transport::AsyncTransport::new(client, self.retry, self.body_snippet_limit);
+        let transport = crate::transport::AsyncTransport::new(client, self.body_snippet_limit);
 
         Ok(Client { base, transport })
     }
 }
 
 /// Builder for [`BlockingClient`].
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 #[derive(Debug, Clone)]
 pub struct BlockingClientBuilder {
     base_url: Url,
@@ -714,19 +671,12 @@ pub struct BlockingClientBuilder {
     connect_timeout: Duration,
     retry: RetryPolicy,
     body_snippet_limit: usize,
-
-    #[cfg(feature = "dangerous")]
-    danger_accept_invalid_certs: bool,
-    #[cfg(feature = "dangerous")]
-    danger_accept_invalid_hostnames: bool,
-
     user_agent: Option<String>,
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl BlockingClientBuilder {
     fn new(base_url: &str) -> Result<Self> {
-        ensure_rustls_provider();
         let base_url = normalize_base_url(base_url)?;
         Ok(Self {
             base_url,
@@ -738,11 +688,6 @@ impl BlockingClientBuilder {
             retry: RetryPolicy::default(),
             body_snippet_limit: DEFAULT_BODY_SNIPPET_LIMIT,
             user_agent: None,
-
-            #[cfg(feature = "dangerous")]
-            danger_accept_invalid_certs: false,
-            #[cfg(feature = "dangerous")]
-            danger_accept_invalid_hostnames: false,
         })
     }
 
@@ -794,44 +739,24 @@ impl BlockingClientBuilder {
         self
     }
 
-    #[cfg(feature = "dangerous")]
-    pub fn danger_accept_invalid_certs(mut self, yes: bool) -> Self {
-        self.danger_accept_invalid_certs = yes;
-        self
-    }
-
-    #[cfg(feature = "dangerous")]
-    pub fn danger_accept_invalid_hostnames(mut self, yes: bool) -> Self {
-        self.danger_accept_invalid_hostnames = yes;
-        self
-    }
-
     pub fn build(self) -> Result<BlockingClient> {
-        let mut default_headers = self.default_headers.clone();
-        default_headers
-            .entry(ACCEPT)
-            .or_insert(HeaderValue::from_static("application/json"));
+        let user_agent = self
+            .user_agent
+            .unwrap_or_else(|| format!("redfish/{}", env!("CARGO_PKG_VERSION")));
 
-        let mut builder = reqwest::blocking::Client::builder()
-            .timeout(self.timeout)
+        let builder = reqx::blocking::Client::builder(self.base_url.as_str())
+            .tls_backend(crate::transport::default_blocking_tls_backend())
+            .request_timeout(self.timeout)
             .connect_timeout(self.connect_timeout)
-            .default_headers(default_headers);
+            .max_response_body_bytes(usize::MAX)
+            .retry_policy(crate::transport::reqx_retry_policy(&self.retry))
+            .backoff_source(crate::transport::reqx_backoff_source(self.retry.clone()))
+            .redirect_policy(reqx::prelude::RedirectPolicy::follow())
+            .default_status_policy(reqx::prelude::StatusPolicy::Response)
+            .client_name(user_agent);
 
-        if let Some(ua) = self.user_agent {
-            builder = builder.user_agent(ua);
-        } else {
-            builder = builder.user_agent(concat!("redfish/", env!("CARGO_PKG_VERSION")));
-        }
-
-        #[cfg(feature = "dangerous")]
-        {
-            if self.danger_accept_invalid_certs {
-                builder = builder.danger_accept_invalid_certs(true);
-            }
-            if self.danger_accept_invalid_hostnames {
-                builder = builder.danger_accept_invalid_hostnames(true);
-            }
-        }
+        #[cfg(feature = "tracing")]
+        let builder = builder.observer(crate::transport::ReqxTracingObserver);
 
         let client = builder
             .build()
@@ -845,8 +770,7 @@ impl BlockingClientBuilder {
             body_snippet_limit: self.body_snippet_limit,
         };
 
-        let transport =
-            crate::transport::BlockingTransport::new(client, self.retry, self.body_snippet_limit);
+        let transport = crate::transport::BlockingTransport::new(client, self.body_snippet_limit);
 
         Ok(BlockingClient { base, transport })
     }

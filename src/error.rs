@@ -58,7 +58,7 @@ impl RequestContext {
 ///
 /// - Preserve actionable context (method, URL, status, request-id)
 /// - Avoid leaking secrets (auth headers, passwords, session tokens)
-/// - Do not expose `reqwest` types in the public API
+/// - Do not expose backend-specific HTTP client types in the public API
 #[derive(Debug)]
 pub struct Error {
     kind: ErrorKind,

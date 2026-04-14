@@ -1,4 +1,4 @@
-#![cfg(feature = "async")]
+#![cfg(feature = "_async")]
 
 use std::time::Duration;
 
@@ -68,6 +68,40 @@ async fn retries_on_503_for_idempotent_methods() {
 
     let systems = client.systems().list().await.unwrap();
     assert_eq!(systems.members.len(), 1);
+}
+
+#[tokio::test]
+async fn does_not_retry_on_500() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("GET"))
+        .and(path("/redfish/v1/Systems"))
+        .respond_with(ResponseTemplate::new(500))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let retry = RetryPolicy::default()
+        .with_max_retries(2)
+        .with_base_delay(Duration::from_millis(1))
+        .with_max_delay(Duration::from_millis(1))
+        .with_jitter(false);
+
+    let client = Client::builder(&server.uri())
+        .unwrap()
+        .retry_policy(retry)
+        .build()
+        .unwrap();
+
+    let err = client
+        .systems()
+        .list()
+        .await
+        .expect_err("expected 500 error");
+    assert_eq!(err.status(), Some(StatusCode::INTERNAL_SERVER_ERROR));
+
+    let requests = server.received_requests().await.expect("request history");
+    assert_eq!(requests.len(), 1);
 }
 
 #[tokio::test]

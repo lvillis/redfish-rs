@@ -1,4 +1,4 @@
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 mod async_tests {
     use http::Method;
     use redfish::Client;
@@ -27,7 +27,7 @@ mod async_tests {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 mod blocking_tests {
     use http::Method;
     use redfish::BlockingClient;

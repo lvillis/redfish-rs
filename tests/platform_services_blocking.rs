@@ -1,4 +1,4 @@
-#![cfg(feature = "blocking")]
+#![cfg(feature = "_blocking")]
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};

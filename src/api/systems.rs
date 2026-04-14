@@ -4,9 +4,9 @@ use crate::Result;
 use crate::api::ActionResponse;
 use crate::types::{Collection, ComputerSystem, OdataId, ResetType, actions::ResetRequest};
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 use crate::BlockingClient;
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 use crate::Client;
 
 /// Access `Systems` collection and member resources.
@@ -21,7 +21,7 @@ impl<'a, C> SystemsService<'a, C> {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "_async")]
 impl<'a> SystemsService<'a, Client> {
     /// `GET /redfish/v1/Systems`
     pub async fn list(&self) -> Result<Collection<OdataId>> {
@@ -58,7 +58,7 @@ impl<'a> SystemsService<'a, Client> {
     }
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(feature = "_blocking")]
 impl<'a> SystemsService<'a, BlockingClient> {
     /// `GET /redfish/v1/Systems`
     pub fn list(&self) -> Result<Collection<OdataId>> {
